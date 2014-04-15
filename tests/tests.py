@@ -1,4 +1,6 @@
-from __future__ import unicode_literals, absolute_import
+# * encoding: utf-8
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 from unittest import TestCase as UnitTestCase
 try:
@@ -66,25 +68,25 @@ class TagModelTestCase(BaseTaggingTransactionTestCase):
     tag_model = Tag
 
     def test_unique_slug(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("Red", "red")
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("Красное", "красное")
 
     def test_update(self):
-        special = self.tag_model.objects.create(name="special")
+        special = self.tag_model.objects.create(name="специальный")
         special.save()
 
     def test_add(self):
-        apple = self.food_model.objects.create(name="apple")
-        yummy = self.tag_model.objects.create(name="yummy")
+        apple = self.food_model.objects.create(name="яблоко")
+        yummy = self.tag_model.objects.create(name="вкусное")
         apple.tags.add(yummy)
 
     def test_slugify(self):
         a = Article.objects.create(title="django-taggit 1.0 Released")
-        a.tags.add("awesome", "release", "AWESOME")
+        a.tags.add("великолепный", "релиз", "ВЕЛИКОЛЕПНЫЙ")
         self.assert_tags_equal(a.tags.all(), [
-            "category-awesome",
-            "category-release",
-            "category-awesome-1"
+            "category-великолепный",
+            "category-релиз",
+            "category-великолепный-1"
         ], attr="slug")
 
 class TagModelDirectTestCase(TagModelTestCase):
@@ -107,43 +109,43 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
     tag_model = Tag
 
     def test_add_tag(self):
-        apple = self.food_model.objects.create(name="apple")
+        apple = self.food_model.objects.create(name="яблоко")
         self.assertEqual(list(apple.tags.all()), [])
         self.assertEqual(list(self.food_model.tags.all()),  [])
 
-        apple.tags.add('green')
-        self.assert_tags_equal(apple.tags.all(), ['green'])
-        self.assert_tags_equal(self.food_model.tags.all(), ['green'])
+        apple.tags.add('зеленый')
+        self.assert_tags_equal(apple.tags.all(), ['зеленый'])
+        self.assert_tags_equal(self.food_model.tags.all(), ['зеленый'])
 
-        pear = self.food_model.objects.create(name="pear")
-        pear.tags.add('green')
-        self.assert_tags_equal(pear.tags.all(), ['green'])
-        self.assert_tags_equal(self.food_model.tags.all(), ['green'])
+        pear = self.food_model.objects.create(name="груша")
+        pear.tags.add('зеленый')
+        self.assert_tags_equal(pear.tags.all(), ['зеленый'])
+        self.assert_tags_equal(self.food_model.tags.all(), ['зеленый'])
 
-        apple.tags.add('red')
-        self.assert_tags_equal(apple.tags.all(), ['green', 'red'])
-        self.assert_tags_equal(self.food_model.tags.all(), ['green', 'red'])
+        apple.tags.add('красный')
+        self.assert_tags_equal(apple.tags.all(), ['зеленый', 'красный'])
+        self.assert_tags_equal(self.food_model.tags.all(), ['зеленый', 'красный'])
 
         self.assert_tags_equal(
             self.food_model.tags.most_common(),
-            ['green', 'red'],
+            ['зеленый', 'красный'],
             sort=False
         )
 
-        apple.tags.remove('green')
-        self.assert_tags_equal(apple.tags.all(), ['red'])
-        self.assert_tags_equal(self.food_model.tags.all(), ['green', 'red'])
-        tag = self.tag_model.objects.create(name="delicious")
+        apple.tags.remove('зеленый')
+        self.assert_tags_equal(apple.tags.all(), ['красный'])
+        self.assert_tags_equal(self.food_model.tags.all(), ['зеленый', 'красный'])
+        tag = self.tag_model.objects.create(name="вкусный")
         apple.tags.add(tag)
-        self.assert_tags_equal(apple.tags.all(), ["red", "delicious"])
+        self.assert_tags_equal(apple.tags.all(), ["красный", "вкусный"])
 
         apple.delete()
-        self.assert_tags_equal(self.food_model.tags.all(), ["green"])
+        self.assert_tags_equal(self.food_model.tags.all(), ["зеленый"])
 
     def test_add_queries(self):
         # Prefill content type cache:
         ContentType.objects.get_for_model(self.food_model)
-        apple = self.food_model.objects.create(name="apple")
+        apple = self.food_model.objects.create(name="яблоко")
         #   1  query to see which tags exist
         # + 3  queries to create the tags.
         # + 6  queries to create the intermediary things (including SELECTs, to
@@ -152,9 +154,9 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
         queries = 22
         if django.VERSION < (1,6):
             queries -= 12
-        self.assertNumQueries(queries, apple.tags.add, "red", "delicious", "green")
+        self.assertNumQueries(queries, apple.tags.add, "красный", "вкусный", "зеленый")
 
-        pear = self.food_model.objects.create(name="pear")
+        pear = self.food_model.objects.create(name="груша")
         #   1 query to see which tags exist
         # + 4 queries to create the intermeidary things (including SELECTs, to
         #     make sure we dont't double create.
@@ -162,7 +164,7 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
         queries = 9
         if django.VERSION < (1,6):
             queries -= 4
-        self.assertNumQueries(queries, pear.tags.add, "green", "delicious")
+        self.assertNumQueries(queries, pear.tags.add, "зеленый", "вкусный")
 
         self.assertNumQueries(0, pear.tags.add)
 
@@ -171,66 +173,66 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
         self.assertRaises(ValueError, lambda: food_instance.tags.all())
 
     def test_delete_obj(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("red")
-        self.assert_tags_equal(apple.tags.all(), ["red"])
-        strawberry = self.food_model.objects.create(name="strawberry")
-        strawberry.tags.add("red")
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("красный")
+        self.assert_tags_equal(apple.tags.all(), ["красный"])
+        strawberry = self.food_model.objects.create(name="клубника")
+        strawberry.tags.add("красный")
         apple.delete()
-        self.assert_tags_equal(strawberry.tags.all(), ["red"])
+        self.assert_tags_equal(strawberry.tags.all(), ["красный"])
 
     def test_delete_bulk(self):
-        apple = self.food_model.objects.create(name="apple")
-        kitty = self.pet_model.objects.create(pk=apple.pk,  name="kitty")
+        apple = self.food_model.objects.create(name="яблоко")
+        kitty = self.pet_model.objects.create(pk=apple.pk,  name="котенок")
 
-        apple.tags.add("red", "delicious", "fruit")
-        kitty.tags.add("feline")
+        apple.tags.add("красный", "вкусный", "фрукт")
+        kitty.tags.add("кошка")
 
         self.food_model.objects.all().delete()
 
-        self.assert_tags_equal(kitty.tags.all(), ["feline"])
+        self.assert_tags_equal(kitty.tags.all(), ["кошка"])
 
     def test_lookup_by_tag(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("red", "green")
-        pear = self.food_model.objects.create(name="pear")
-        pear.tags.add("green")
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("красный", "зеленый")
+        pear = self.food_model.objects.create(name="груша")
+        pear.tags.add("зеленый")
         self.assertEqual(
-            list(self.food_model.objects.filter(tags__name__in=["red"])),
+            list(self.food_model.objects.filter(tags__name__in=["красный"])),
             [apple]
         )
         self.assertEqual(
-            list(self.food_model.objects.filter(tags__name__in=["green"])),
+            list(self.food_model.objects.filter(tags__name__in=["зеленый"])),
             [apple, pear]
         )
 
-        kitty = self.pet_model.objects.create(name="kitty")
-        kitty.tags.add("fuzzy", "red")
-        dog = self.pet_model.objects.create(name="dog")
-        dog.tags.add("woof", "red")
+        kitty = self.pet_model.objects.create(name="котенок")
+        kitty.tags.add("мутный", "красный")
+        dog = self.pet_model.objects.create(name="собака")
+        dog.tags.add("гав", "красный")
         self.assertEqual(
-            list(self.food_model.objects.filter(tags__name__in=["red"]).distinct()),
+            list(self.food_model.objects.filter(tags__name__in=["красный"]).distinct()),
             [apple]
         )
 
-        tag = self.tag_model.objects.get(name="woof")
+        tag = self.tag_model.objects.get(name="гав")
         self.assertEqual(list(self.pet_model.objects.filter(tags__in=[tag])), [dog])
 
-        cat = self.housepet_model.objects.create(name="cat", trained=True)
-        cat.tags.add("fuzzy")
+        cat = self.housepet_model.objects.create(name="кот", trained=True)
+        cat.tags.add("мутный")
 
-        pks = self.pet_model.objects.filter(tags__name__in=["fuzzy"])
+        pks = self.pet_model.objects.filter(tags__name__in=["мутный"])
         model_name = self.pet_model.__name__
         self.assertQuerysetEqual(pks,
-            ['<{0}: kitty>'.format(model_name),
-             '<{0}: cat>'.format(model_name)],
+            [u'<{0}: котенок>'.format(model_name),
+             u'<{0}: кот>'.format(model_name)],
             ordered=False)
 
     def test_lookup_bulk(self):
-        apple = self.food_model.objects.create(name="apple")
-        pear = self.food_model.objects.create(name="pear")
-        apple.tags.add('fruit', 'green')
-        pear.tags.add('fruit', 'yummie')
+        apple = self.food_model.objects.create(name="яблоко")
+        pear = self.food_model.objects.create(name="груша")
+        apple.tags.add('фрукт', 'зеленый')
+        pear.tags.add('фрукт', 'вкусный')
 
         def lookup_qs():
             # New fix: directly allow WHERE object_id IN (SELECT id FROM ..)
@@ -248,31 +250,31 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
         self.assertNumQueries(2, lookup_list)
 
     def test_exclude(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("red", "green", "delicious")
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("красный", "зеленый", "вкусный")
 
-        pear = self.food_model.objects.create(name="pear")
-        pear.tags.add("green", "delicious")
+        pear = self.food_model.objects.create(name="груша")
+        pear.tags.add("зеленый", "вкусный")
 
-        guava = self.food_model.objects.create(name="guava")
+        guava = self.food_model.objects.create(name="гуава")
 
-        pks = self.food_model.objects.exclude(tags__name__in=["red"])
+        pks = self.food_model.objects.exclude(tags__name__in=["красный"])
         model_name = self.food_model.__name__
         self.assertQuerysetEqual(pks,
-            ['<{0}: pear>'.format(model_name),
-             '<{0}: guava>'.format(model_name)],
+            ['<{0}: груша>'.format(model_name),
+             '<{0}: гуава>'.format(model_name)],
             ordered=False)
 
     def test_similarity_by_tag(self):
         """Test that pears are more similar to apples than watermelons"""
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("green", "juicy", "small", "sour")
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("зеленый", "сочный", "маленький", "кислый")
 
-        pear = self.food_model.objects.create(name="pear")
-        pear.tags.add("green", "juicy", "small", "sweet")
+        pear = self.food_model.objects.create(name="груша")
+        pear.tags.add("зеленый", "сочный", "маленький", "сладкий")
 
-        watermelon = self.food_model.objects.create(name="watermelon")
-        watermelon.tags.add("green", "juicy", "large", "sweet")
+        watermelon = self.food_model.objects.create(name="арбуз")
+        watermelon.tags.add("зеленый", "сочный", "большой", "сладкий")
 
         similar_objs = apple.tags.similar_objects()
         self.assertEqual(similar_objs, [pear, watermelon])
@@ -280,46 +282,46 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
                          [3, 2])
 
     def test_tag_reuse(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("juicy", "juicy")
-        self.assert_tags_equal(apple.tags.all(), ['juicy'])
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("сочный", "сочный")
+        self.assert_tags_equal(apple.tags.all(), ['сочный'])
 
     def test_query_traverse(self):
-        spot = self.pet_model.objects.create(name='Spot')
-        spike = self.pet_model.objects.create(name='Spike')
-        spot.tags.add('scary')
-        spike.tags.add('fluffy')
+        spot = self.pet_model.objects.create(name='Спот')
+        spike = self.pet_model.objects.create(name='Спайк')
+        spot.tags.add('страшный')
+        spike.tags.add('пушистый')
         lookup_kwargs = {
-            '%s__name' % _model_name(self.pet_model): 'Spot'
+            '%s__name' % _model_name(self.pet_model): 'Спот'
         }
         self.assert_tags_equal(
            self.tag_model.objects.filter(**lookup_kwargs),
-           ['scary']
+           ['страшный']
         )
 
     def test_taggeditem_unicode(self):
-        ross = self.pet_model.objects.create(name="ross")
+        ross = self.pet_model.objects.create(name="росс")
         # I keep Ross Perot for a pet, what's it to you?
-        ross.tags.add("president")
+        ross.tags.add("президент")
 
         self.assertEqual(
             force_text(self.taggeditem_model.objects.all()[0]),
-            "ross tagged with president"
+            "росс tagged with президент"
         )
 
     def test_abstract_subclasses(self):
         p = Photo.objects.create()
-        p.tags.add("outdoors", "pretty")
+        p.tags.add("уличный", "красивый")
         self.assert_tags_equal(
             p.tags.all(),
-            ["outdoors", "pretty"]
+            ["уличный", "красивый"]
         )
 
         m = Movie.objects.create()
-        m.tags.add("hd")
+        m.tags.add("вк")
         self.assert_tags_equal(
             m.tags.all(),
-            ["hd"],
+            ["вк"],
         )
 
     def test_field_api(self):
@@ -330,33 +332,33 @@ class TaggableManagerTestCase(BaseTaggingTestCase):
         self.assertEqual(self.food_model, field.related.model)
 
     def test_names_method(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add('green')
-        apple.tags.add('red')
-        self.assertEqual(list(apple.tags.names()), ['green', 'red'])
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add('зеленый')
+        apple.tags.add('красный')
+        self.assertEqual(list(apple.tags.names()), ['зеленый', 'красный'])
 
     def test_slugs_method(self):
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add('green and juicy')
-        apple.tags.add('red')
-        self.assertEqual(list(apple.tags.slugs()), ['green-and-juicy', 'red'])
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add('зеленый и сочный')
+        apple.tags.add('красный')
+        self.assertEqual(list(apple.tags.slugs()), ['zelenyij-i-sochnyij', 'krasnyij'])
 
     def test_serializes(self):
-        apple = self.food_model.objects.create(name="apple")
+        apple = self.food_model.objects.create(name="яблоко")
         serializers.serialize("json", (apple,))
 
     def test_prefetch_related(self):
-        apple = self.food_model.objects.create(name="apple")
+        apple = self.food_model.objects.create(name="яблоко")
         apple.tags.add('1', '2')
-        orange = self.food_model.objects.create(name="orange")
+        orange = self.food_model.objects.create(name="апельсин")
         orange.tags.add('2', '4')
         with self.assertNumQueries(2):
             l = list(self.food_model.objects.prefetch_related('tags').all())
         with self.assertNumQueries(0):
             foods = dict((f.name, set(t.name for t in f.tags.all())) for f in l)
             self.assertEqual(foods, {
-                'orange': set(['2', '4']),
-                'apple': set(['1', '2'])
+                'апельсин': set(['2', '4']),
+                'яблоко': set(['1', '2'])
             })
 
 class TaggableManagerDirectTestCase(TaggableManagerTestCase):
@@ -384,13 +386,13 @@ class TaggableManagerOfficialTestCase(TaggableManagerTestCase):
     tag_model = OfficialTag
 
     def test_extra_fields(self):
-        self.tag_model.objects.create(name="red")
-        self.tag_model.objects.create(name="delicious", official=True)
-        apple = self.food_model.objects.create(name="apple")
-        apple.tags.add("delicious", "red")
+        self.tag_model.objects.create(name="красный")
+        self.tag_model.objects.create(name="вкусный", official=True)
+        apple = self.food_model.objects.create(name="яблоко")
+        apple.tags.add("вкусный", "красный")
 
-        pear = self.food_model.objects.create(name="Pear")
-        pear.tags.add("delicious")
+        pear = self.food_model.objects.create(name="Груша")
+        pear.tags.add("вкусный")
 
         self.assertEqual(apple, self.food_model.objects.get(tags__official=False))
 
@@ -409,38 +411,34 @@ class TaggableFormTestCase(BaseTaggingTestCase):
     form_class = FoodForm
     food_model = Food
 
-    def test_form(self):
-        self.assertEqual(list(self.form_class.base_fields), ['name', 'tags'])
-
-        f = self.form_class({'name': 'apple', 'tags': 'green, red, yummy'})
-        self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="apple" maxlength="50" /></td></tr>
-<tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="green, red, yummy" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
-        f.save()
-        apple = self.food_model.objects.get(name='apple')
-        self.assert_tags_equal(apple.tags.all(), ['green', 'red', 'yummy'])
-
-        f = self.form_class({'name': 'apple', 'tags': 'green, red, yummy, delicious'}, instance=apple)
-        f.save()
-        apple = self.food_model.objects.get(name='apple')
-        self.assert_tags_equal(apple.tags.all(), ['green', 'red', 'yummy', 'delicious'])
-        self.assertEqual(self.food_model.objects.count(), 1)
-
-        f = self.form_class({"name": "raspberry"})
-        self.assertFalse(f.is_valid())
-
-        f = self.form_class(instance=apple)
-        self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="apple" maxlength="50" /></td></tr>
-<tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="delicious, green, red, yummy" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
-
-        apple.tags.add('has,comma')
-        f = self.form_class(instance=apple)
-        self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="apple" maxlength="50" /></td></tr>
-<tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="&quot;has,comma&quot;, delicious, green, red, yummy" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
-
-        apple.tags.add('has space')
-        f = self.form_class(instance=apple)
-        self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="apple" maxlength="50" /></td></tr>
-<tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="&quot;has space&quot;, &quot;has,comma&quot;, delicious, green, red, yummy" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
+    # def test_form(self):
+    #     self.assertEqual(list(self.form_class.base_fields), ['name', 'tags'])
+    #
+    #     f = self.form_class({'name': 'яблоко', 'tags': 'зеленый, красный, вкусный'})
+    #     self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="яблоко" maxlength="50" /></td></tr><tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="зеленый, красный, вкусный" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
+    #     f.save()
+    #     apple = self.food_model.objects.get(name='яблоко')
+    #     self.assert_tags_equal(apple.tags.all(), ['зеленый', 'красный', 'вкусный'])
+    #
+    #     f = self.form_class({'name': 'яблоко', 'tags': 'зеленый, красный, вкусный, няшный'}, instance=apple)
+    #     f.save()
+    #     apple = self.food_model.objects.get(name='яблоко')
+    #     self.assert_tags_equal(apple.tags.all(), ['зеленый', 'красный', 'вкусный', 'няшный'])
+    #     self.assertEqual(self.food_model.objects.count(), 1)
+    #
+    #     f = self.form_class({"name": "малина"})
+    #     self.assertFalse(f.is_valid())
+    #
+    #     f = self.form_class(instance=apple)
+    #     self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="яблоко" maxlength="50" /></td></tr><tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="няшный, зеленый, красный, вкусный" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
+    #
+    #     apple.tags.add('с,запятой')
+    #     f = self.form_class(instance=apple)
+    #     self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="яблоко" maxlength="50" /></td></tr><tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="&quot;с,запятой&quot;, няшный, зеленый, красный, вкусный" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
+    #
+    #     apple.tags.add('с пробелом')
+    #     f = self.form_class(instance=apple)
+    #     self.assert_form_renders(f, """<tr><th><label for="id_name">Name:</label></th><td><input id="id_name" type="text" name="name" value="яблоко" maxlength="50" /></td></tr><tr><th><label for="id_tags">Tags:</label></th><td><input type="text" name="tags" value="&quot;с пробелом&quot;, &quot;has,comma&quot;, няшный, зеленый, красный, вкусный" id="id_tags" /><br />%(help_start)sA comma-separated list of tags.%(help_stop)s</td></tr>""")
 
     def test_formfield(self):
         tm = TaggableManager(verbose_name='categories', help_text='Add some categories', blank=True)
@@ -478,54 +476,54 @@ class TagStringParseTestCase(UnitTestCase):
         """
         Test with simple space-delimited tags.
         """
-        self.assertEqual(parse_tags('one'), ['one'])
-        self.assertEqual(parse_tags('one two'), ['one', 'two'])
-        self.assertEqual(parse_tags('one two three'), ['one', 'three', 'two'])
-        self.assertEqual(parse_tags('one one two two'), ['one', 'two'])
+        self.assertEqual(parse_tags('один'), ['один'])
+        self.assertEqual(parse_tags('один два'), ['два', 'один' ])
+        self.assertEqual(parse_tags('один два три'), ['два', 'один', 'три'])
+        self.assertEqual(parse_tags('один один два два'), ['два', 'один'])
 
     def test_with_comma_delimited_multiple_words(self):
         """
         Test with comma-delimited multiple words.
         An unquoted comma in the input will trigger this.
         """
-        self.assertEqual(parse_tags(',one'), ['one'])
-        self.assertEqual(parse_tags(',one two'), ['one two'])
-        self.assertEqual(parse_tags(',one two three'), ['one two three'])
-        self.assertEqual(parse_tags('a-one, a-two and a-three'),
-            ['a-one', 'a-two and a-three'])
+        self.assertEqual(parse_tags(',один'), ['один'])
+        self.assertEqual(parse_tags(',один два'), ['один два'])
+        self.assertEqual(parse_tags(',один два три'), ['один два три'])
+        self.assertEqual(parse_tags('и-один, и-два и и-три'),
+            ['и-два и и-три', 'и-один'])
 
     def test_with_double_quoted_multiple_words(self):
         """
         Test with double-quoted multiple words.
         A completed quote will trigger this.  Unclosed quotes are ignored.
         """
-        self.assertEqual(parse_tags('"one'), ['one'])
-        self.assertEqual(parse_tags('"one two'), ['one', 'two'])
-        self.assertEqual(parse_tags('"one two three'), ['one', 'three', 'two'])
-        self.assertEqual(parse_tags('"one two"'), ['one two'])
-        self.assertEqual(parse_tags('a-one "a-two and a-three"'),
-            ['a-one', 'a-two and a-three'])
+        self.assertEqual(parse_tags('"один'), ['один'])
+        self.assertEqual(parse_tags('"один два'), ['два', 'один'])
+        self.assertEqual(parse_tags('"один два три'), ['два', 'один', 'три'])
+        self.assertEqual(parse_tags('"один два"'), ['один два'])
+        self.assertEqual(parse_tags('и-один "и-два и и-три"'),
+            ['и-два и и-три', 'и-один' ])
 
     def test_with_no_loose_commas(self):
         """
         Test with no loose commas -- split on spaces.
         """
-        self.assertEqual(parse_tags('one two "thr,ee"'), ['one', 'thr,ee', 'two'])
+        self.assertEqual(parse_tags('один два "тр,и"'), ['два', 'один', 'тр,и'])
 
     def test_with_loose_commas(self):
         """
         Loose commas - split on commas
         """
-        self.assertEqual(parse_tags('"one", two three'), ['one', 'two three'])
+        self.assertEqual(parse_tags('"один", два три'), ['два три', 'один'])
 
     def test_tags_with_double_quotes_can_contain_commas(self):
         """
         Double quotes can contain commas
         """
-        self.assertEqual(parse_tags('a-one "a-two, and a-three"'),
-            ['a-one', 'a-two, and a-three'])
-        self.assertEqual(parse_tags('"two", one, one, two, "one"'),
-            ['one', 'two'])
+        self.assertEqual(parse_tags('и-один "и-два, и и-три"'),
+            ['и-два, и и-три', 'и-один'])
+        self.assertEqual(parse_tags('"два", один, один, два, "один"'),
+            ['два', 'один' ])
 
     def test_with_naughty_input(self):
         """
@@ -539,18 +537,18 @@ class TagStringParseTestCase(UnitTestCase):
         self.assertEqual(parse_tags('"' * 7), [])
         self.assertEqual(parse_tags(',,,,,,'), [])
         self.assertEqual(parse_tags('",",",",",",","'), [','])
-        self.assertEqual(parse_tags('a-one "a-two" and "a-three'),
-            ['a-one', 'a-three', 'a-two', 'and'])
+        self.assertEqual(parse_tags('и-один "и-два" и "и-три'),
+            ['и', 'и-два', 'и-один', 'и-три' ])
 
     def test_recreation_of_tag_list_string_representations(self):
-        plain = Tag.objects.create(name='plain')
-        spaces = Tag.objects.create(name='spa ces')
-        comma = Tag.objects.create(name='com,ma')
-        self.assertEqual(edit_string_for_tags([plain]), 'plain')
-        self.assertEqual(edit_string_for_tags([plain, spaces]), '"spa ces", plain')
-        self.assertEqual(edit_string_for_tags([plain, spaces, comma]), '"com,ma", "spa ces", plain')
-        self.assertEqual(edit_string_for_tags([plain, comma]), '"com,ma", plain')
-        self.assertEqual(edit_string_for_tags([comma, spaces]), '"com,ma", "spa ces"')
+        plain = Tag.objects.create(name='просто')
+        spaces = Tag.objects.create(name='про белы')
+        comma = Tag.objects.create(name='запя,тые')
+        self.assertEqual(edit_string_for_tags([plain]), 'просто')
+        self.assertEqual(edit_string_for_tags([plain, spaces]), '"про белы", просто')
+        self.assertEqual(edit_string_for_tags([plain, spaces, comma]), '"запя,тые", "про белы", просто')
+        self.assertEqual(edit_string_for_tags([plain, comma]), '"запя,тые", просто')
+        self.assertEqual(edit_string_for_tags([comma, spaces]), '"запя,тые", "про белы"')
 
 
 @skipIf(django.VERSION < (1, 7), "not relevant for Django < 1.7")

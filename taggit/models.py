@@ -7,7 +7,7 @@ except ImportError:  # django < 1.7
     from django.contrib.contenttypes.generic import GenericForeignKey
 from django.db import models, IntegrityError, transaction
 from django.db.models.query import QuerySet
-from django.template.defaultfilters import slugify as default_slugify
+from pytils.translit import slugify as default_slugify
 from django.utils.translation import ugettext_lazy as _, ugettext
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -42,6 +42,17 @@ class TagBase(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.slug:
+            # nn = self.name
+            # list_ = nn.split(' ')
+            # if list_[0] != list_[0].upper():
+            #     list_[0] = list_[0].capitalize()
+            # self.name = ' '.join(list_)
+            # reuse = Tag.objects.filter(name=self.name, slug=self.slugify(self.name,))
+            # if reuse:
+            #     self.pk = reuse[0].pk
+            #     self.slug = reuse[0].slug
+            #     self.name = reuse[0].name
+            #     return super(TagBase, self).save(*args, **kwargs)
             self.slug = self.slugify(self.name)
             from django.db import router
             using = kwargs.get("using") or router.db_for_write(
@@ -74,7 +85,7 @@ class TagBase(models.Model):
             return super(TagBase, self).save(*args, **kwargs)
 
     def slugify(self, tag, i=None):
-        slug = default_slugify(tag)
+        slug = default_slugify(tag.replace(' ', '-'))
         if i is not None:
             slug += "_%d" % i
         return slug

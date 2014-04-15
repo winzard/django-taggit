@@ -8,10 +8,16 @@ from django.core.management import execute_from_command_line
 
 if not settings.configured:
     settings.configure(
-        DATABASES={
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-            }
+        DATABASES = {
+        'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'test',                      # Or path to database file if using sqlite3.
+        'USER': 'root',                      # Not used with sqlite3.
+        'PASSWORD': 'dergfhjkm',                  # Not used with sqlite3.
+        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'OPTIONS': {'init_command': 'SET storage_engine=INNODB,character_set_connection=utf8,collation_connection=utf8_unicode_ci;'},
+        }
         },
         INSTALLED_APPS=[
             'django.contrib.contenttypes',
